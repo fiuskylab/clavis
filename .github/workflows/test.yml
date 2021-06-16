@@ -1,0 +1,31 @@
+# Workflow name
+name: Running Tests
+
+# In which branches it will run
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+  workflow_dispatch: 
+
+# Defining which jobs need to be ran
+jobs:
+  test:
+    strategy:
+      matrix:
+        go-version: [ 1.16.x ]
+        os: [ ubuntu-latest, macos-latest, windows-latest ]
+    runs-on: ${{ matrix.os }}
+    steps:
+    - name: Setting Go Environment
+      uses: actions/setup-go@2
+      with:
+        go-version: ${{ matrix.go-version }}
+
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Running tests
+      run: go test -v **/*_test.go
