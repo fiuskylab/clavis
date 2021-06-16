@@ -23,3 +23,17 @@ func Set(key, value string) error {
 	return nil
 }
 
+// Retrieve value
+func Get(key string) (string, error) {
+	if key == "" {
+		return "", fmt.Errorf("Missing key")
+	}
+
+	val, ok := values[key]
+
+	if !ok {
+		return "", fmt.Errorf("%s not found", key)
+	}
+
+	return val, nil
+}
