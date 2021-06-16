@@ -20,12 +20,12 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
     - name: Setting Go Environment
-      uses: actions/setup-go@2.1.2
+      uses: actions/setup-go@2
       with:
         go-version: ${{ matrix.go-version }}
 
     - name: Checkout code
-      uses: actions/checkout@v2.1.2
+      uses: actions/checkout@v2
 
     - name: Running tests
       run: go test -v **/*_test.go
