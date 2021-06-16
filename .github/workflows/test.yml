@@ -1,0 +1,24 @@
+# Workflow name
+name: Running Tests
+
+# In which branches it will run
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+  workflow_dispatch: 
+
+# Defining which jobs need to be ran
+jobs:
+  build:
+    runs-on: ubuntu-latest
+      steps:
+        - name: Setting Go Environment
+          uses: actions/setup-go@2.1.2
+          with:
+            go-version: 1.16.5
+
+        - name: Running tests
+          run: go test -v **/*_test.go
