@@ -1,12 +1,20 @@
 package clavis
 
-import "fmt"
+import (
+	"fmt"
+	"time"
+)
+
+type valorem struct {
+	value      string
+	expiration int64
+}
 
 // Stored values
-var values map[string]string = make(map[string]string)
+var values map[string]valorem = make(map[string]valorem)
 
 // Set a key value
-func Set(key, value string) error {
+func Set(key, value string, unixExp time.Duration) error {
 	if key == "" {
 		return fmt.Errorf("Missing key")
 	}
@@ -18,7 +26,11 @@ func Set(key, value string) error {
 	if _, ok := values[key]; ok {
 		return fmt.Errorf("%s already exists", key)
 	}
-	values[key] = value
+
+	values[key] = valorem{
+		value:      value,
+		expiration: int64(unixExp),
+	}
 
 	return nil
 }
@@ -35,5 +47,15 @@ func Get(key string) (string, error) {
 		return "", fmt.Errorf("%s not found", key)
 	}
 
-	return val, nil
+	exp := val.expiration
+
+	if exp == -1 {
+		return val.value, nil
+	}
+
+	if (exp - time.Now().Unix()) < 0 {
+		return "", fmt.Errorf("%s is expirated", key)
+	}
+
+	return val.value, nil
 }
