@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/fiuskylab/clavis"
 )
@@ -17,21 +18,21 @@ type test struct {
 func setTestCases() []test {
 	var tests []test
 
-	got := clavis.Set("", "Token Bearer")
+	got := clavis.Set("", "Token Bearer", -1)
 	tests = append(tests, test{
 		name: "Missing key",
 		want: fmt.Errorf("Missing key"),
 		got:  got,
 	})
 
-	got = clavis.Set("token-123", "")
+	got = clavis.Set("token-123", "", -1)
 	tests = append(tests, test{
 		name: "Missing Value",
 		want: fmt.Errorf("Missing value"),
 		got:  got,
 	})
 
-	got = clavis.Set("token-123", "Bearer Token")
+	got = clavis.Set("token-123", "Bearer Token", -1)
 	tests = append(tests, test{
 		name: "Correct set",
 		want: nil,
@@ -44,7 +45,9 @@ func setTestCases() []test {
 func TestSet(t *testing.T) {
 	for _, tt := range setTestCases() {
 		if !reflect.DeepEqual(tt.got, tt.want) {
-			t.Errorf("\nWant: %v\n Got: %v", tt.want, tt.got)
+			t.Run(tt.name, func(t *testing.T) {
+				t.Errorf("\nWant: %v\n Got: %v", tt.want, tt.got)
+			})
 		}
 	}
 }
@@ -52,11 +55,22 @@ func TestSet(t *testing.T) {
 func getTestCases() []test {
 	var tests []test
 
-	key := "key"
+	key_inf := "key-infinite"
 	val := "value"
 
 	{
-		got := clavis.Set(key, val)
+		got := clavis.Set(key_inf, val, -1)
+		tests = append(tests, test{
+			name: "Correct set",
+			want: nil,
+			got:  got,
+		})
+	}
+
+	key_fin := "key-finite"
+	{
+		got := clavis.Set(key_fin, val, 1)
+		time.Sleep(time.Second * 1)
 		tests = append(tests, test{
 			name: "Correct set",
 			want: nil,
@@ -84,7 +98,7 @@ func getTestCases() []test {
 	}
 
 	{
-		gotVal, gotErr := clavis.Get(key)
+		gotVal, gotErr := clavis.Get(key_inf)
 
 		tests = append(tests, test{
 			name: "Found key-value nil error",
@@ -99,13 +113,25 @@ func getTestCases() []test {
 		})
 	}
 
+	{
+		_, gotErr := clavis.Get(key_fin)
+
+		tests = append(tests, test{
+			name: "Found expired key-value",
+			want: fmt.Errorf("%s is expirated", key_fin),
+			got:  gotErr,
+		})
+	}
+
 	return tests
 }
 
 func TestGet(t *testing.T) {
 	for _, tt := range getTestCases() {
 		if !reflect.DeepEqual(tt.got, tt.want) {
-			t.Errorf("\nWant: %v\n Got: %v", tt.want, tt.got)
+			t.Run(tt.name, func(t *testing.T) {
+				t.Errorf("\nWant: %v\n Got: %v", tt.want, tt.got)
+			})
 		}
 	}
 }
