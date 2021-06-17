@@ -49,9 +49,9 @@ func Get(key string) (string, error) {
 
 	exp := val.expiration
 
-	//if exp != -1 && ( time.Now().Unix() - exp ) < 0 {
-
-	//}
+	if exp == -1 {
+		return val.value, nil
+	}
 
 	if (exp - time.Now().Unix()) < 0 {
 		return "", fmt.Errorf("%s is expirated", key)
