@@ -5,6 +5,29 @@ import (
 	"time"
 )
 
+// Config for Clavis Client
+type Config struct {
+	// Amount of threads to run Clavis
+	// Default value: 1
+	Threads uint
+
+	// If Clavis will save the value in files
+	// Default value: true
+	EnableInDisk bool
+
+	// Which folder the files will be saved
+	// Default value: clavis/
+	InDiskPath string
+
+	// If Clavis will save the value in memory
+	// Default value: true
+	EnableInMemory bool
+
+	// Expiration time for every stored value
+	// Default value(for unset expiration): true
+	DefaultExpiration int64
+}
+
 type valorem struct {
 	value      string
 	expiration int64
