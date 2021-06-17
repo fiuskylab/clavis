@@ -28,6 +28,12 @@ type Config struct {
 	DefaultExpiration int64
 }
 
+// Client struct responsible for storing config and managing storage
+type Client struct {
+	// Client config
+	Config Config
+}
+
 type valorem struct {
 	value      string
 	expiration int64
