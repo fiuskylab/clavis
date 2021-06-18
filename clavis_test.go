@@ -1,7 +1,6 @@
 package clavis_test
 
 import (
-	"fmt"
 	"reflect"
 	"testing"
 	"time"
@@ -23,21 +22,21 @@ func setTestCases() []test {
 	got := client.Set("", "Token Bearer", -1)
 	tests = append(tests, test{
 		name: "Missing key",
-		want: fmt.Errorf("Missing key"),
+		want: clavis.ErratMissing("key"),
 		got:  got,
 	})
 
 	got = client.Set("token-123", "", -1)
 	tests = append(tests, test{
 		name: "Missing Value",
-		want: fmt.Errorf("Missing value"),
+		want: clavis.ErratMissing("value"),
 		got:  got,
 	})
 
 	got = client.Set("token-123", "Bearer Token", -1)
 	tests = append(tests, test{
 		name: "Correct set",
-		want: nil,
+		want: clavis.NilErrat(),
 		got:  got,
 	})
 
@@ -66,7 +65,7 @@ func getTestCases() []test {
 		got := client.Set(key_inf, val, -1)
 		tests = append(tests, test{
 			name: "Correct set",
-			want: nil,
+			want: clavis.NilErrat(),
 			got:  got,
 		})
 	}
@@ -77,7 +76,7 @@ func getTestCases() []test {
 		time.Sleep(time.Second * 1)
 		tests = append(tests, test{
 			name: "Correct set",
-			want: nil,
+			want: clavis.NilErrat(),
 			got:  got,
 		})
 	}
@@ -86,7 +85,7 @@ func getTestCases() []test {
 		_, gotErr := client.Get("")
 		tests = append(tests, test{
 			name: "Empty key",
-			want: fmt.Errorf("Missing key"),
+			want: clavis.ErratMissing("key"),
 			got:  gotErr,
 		})
 	}
@@ -96,7 +95,7 @@ func getTestCases() []test {
 		_, gotErr := client.Get(key)
 		tests = append(tests, test{
 			name: "Key inexistent",
-			want: fmt.Errorf("%s not found", key),
+			want: clavis.ErratNotFound(key),
 			got:  gotErr,
 		})
 	}
@@ -106,7 +105,7 @@ func getTestCases() []test {
 
 		tests = append(tests, test{
 			name: "Found key-value nil error",
-			want: nil,
+			want: clavis.NilErrat(),
 			got:  gotErr,
 		})
 
@@ -122,7 +121,7 @@ func getTestCases() []test {
 
 		tests = append(tests, test{
 			name: "Found expired key-value",
-			want: fmt.Errorf("%s is expirated", key_fin),
+			want: clavis.ErratExpired(key_fin),
 			got:  gotErr,
 		})
 	}
