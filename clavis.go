@@ -1,7 +1,6 @@
 package clavis
 
 import (
-	"fmt"
 	"time"
 )
 
@@ -58,17 +57,17 @@ func NewClavis(conf Config) Client {
 }
 
 // Set a key value
-func (c *Client) Set(key, value string, unixExp time.Duration) error {
+func (c *Client) Set(key, value string, unixExp time.Duration) errat {
 	if key == "" {
-		return fmt.Errorf("Missing key")
+		return ErratMissing("key")
 	}
 
 	if value == "" {
-		return fmt.Errorf("Missing value")
+		return ErratMissing("value")
 	}
 
 	if _, ok := c.storage[key]; ok {
-		return fmt.Errorf("%s already exists", key)
+		return ErratExists(key)
 	}
 
 	c.storage[key] = valorem{
@@ -76,30 +75,30 @@ func (c *Client) Set(key, value string, unixExp time.Duration) error {
 		expiration: int64(unixExp),
 	}
 
-	return nil
+	return NilErrat()
 }
 
 // Retrieve value
-func (c *Client) Get(key string) (string, error) {
+func (c *Client) Get(key string) (string, errat) {
 	if key == "" {
-		return "", fmt.Errorf("Missing key")
+		return "", ErratMissing("key")
 	}
 
 	val, ok := c.storage[key]
 
 	if !ok {
-		return "", fmt.Errorf("%s not found", key)
+		return "", ErratNotFound(key)
 	}
 
 	exp := val.expiration
 
 	if exp == -1 {
-		return val.value, nil
+		return val.value, NilErrat()
 	}
 
 	if (exp - time.Now().Unix()) < 0 {
-		return "", fmt.Errorf("%s is expirated", key)
+		return "", ErratExpired(key)
 	}
 
-	return val.value, nil
+	return val.value, NilErrat()
 }
