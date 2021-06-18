@@ -31,7 +31,8 @@ type Config struct {
 // Client struct responsible for storing config and managing storage
 type Client struct {
 	// Client config
-	Config Config
+	Config  Config
+	storage map[string]valorem
 }
 
 type valorem struct {
@@ -39,11 +40,25 @@ type valorem struct {
 	expiration int64
 }
 
-// Stored values
-var values map[string]valorem = make(map[string]valorem)
+func DefaultConfig() Config {
+	return Config{
+		Threads:           2,
+		EnableInDisk:      true,
+		InDiskPath:        "clavis/",
+		EnableInMemory:    true,
+		DefaultExpiration: -1,
+	}
+}
+
+func NewClavis(conf Config) Client {
+	return Client{
+		Config:  conf,
+		storage: make(map[string]valorem),
+	}
+}
 
 // Set a key value
-func Set(key, value string, unixExp time.Duration) error {
+func (c *Client) Set(key, value string, unixExp time.Duration) error {
 	if key == "" {
 		return fmt.Errorf("Missing key")
 	}
@@ -52,11 +67,11 @@ func Set(key, value string, unixExp time.Duration) error {
 		return fmt.Errorf("Missing value")
 	}
 
-	if _, ok := values[key]; ok {
+	if _, ok := c.storage[key]; ok {
 		return fmt.Errorf("%s already exists", key)
 	}
 
-	values[key] = valorem{
+	c.storage[key] = valorem{
 		value:      value,
 		expiration: int64(unixExp),
 	}
@@ -65,12 +80,12 @@ func Set(key, value string, unixExp time.Duration) error {
 }
 
 // Retrieve value
-func Get(key string) (string, error) {
+func (c *Client) Get(key string) (string, error) {
 	if key == "" {
 		return "", fmt.Errorf("Missing key")
 	}
 
-	val, ok := values[key]
+	val, ok := c.storage[key]
 
 	if !ok {
 		return "", fmt.Errorf("%s not found", key)
