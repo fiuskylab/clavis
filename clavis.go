@@ -102,3 +102,16 @@ func (c *Client) Get(key string) (string, errat) {
 
 	return val.value, NilErrat()
 }
+
+// Retrieve value and remove it
+func (c *Client) Pop(key string) (string, errat) {
+	val, err := c.Get(key)
+
+	if !err.Nil() {
+		return "", err
+	}
+
+	delete(c.storage, key)
+
+	return val, NilErrat()
+}
