@@ -1,6 +1,7 @@
 package clavis
 
 import (
+	"os"
 	"time"
 )
 
@@ -12,15 +13,15 @@ type Config struct {
 
 	// If Clavis will save the value in files
 	// Default value: true
-	EnableInDisk bool
+	EnabledInDisk bool
 
 	// Which folder the files will be saved
-	// Default value: clavis/
+	// Default value: ./clavis/
 	InDiskPath string
 
 	// If Clavis will save the value in memory
 	// Default value: true
-	EnableInMemory bool
+	EnabledInMemory bool
 
 	// Expiration time for every stored value
 	// Default value(for unset expiration): true
@@ -42,13 +43,15 @@ type valorem struct {
 func DefaultConfig() Config {
 	return Config{
 		Threads:           2,
-		EnableInDisk:      true,
-		InDiskPath:        "clavis/",
-		EnableInMemory:    true,
+		EnabledInDisk:     true,
+		InDiskPath:        "./clavis/",
+		EnabledInMemory:   true,
 		DefaultExpiration: -1,
 	}
 }
 
+// Return default client for given Config
+// In case of nil field, will be assumed the default value
 func NewClavis(conf Config) Client {
 	return Client{
 		Config:  conf,
@@ -70,14 +73,51 @@ func (c *Client) Set(key, value string, unixExp time.Duration) errat {
 		return ErratExists(key)
 	}
 
-	c.storage[key] = valorem{
+	val := valorem{
+		key:        key,
 		value:      value,
 		expiration: int64(unixExp),
+	}
+
+	if c.Config.EnabledInMemory {
+		c.storage[key] = val
+	}
+
+	if c.Config.EnabledInDisk {
+		val.createFile(c.Config.InDiskPath)
 	}
 
 	return NilErrat()
 }
 
+// Register a file with both value and expiration
+func (v *valorem) createFile(path string) errat {
+	v.keyEncrypt = Sha1Encrypt(v.key)
+
+	filePath := fmt.Sprintf("%s%s", path, v.keyEncrypt)
+
+	_, err := os.Stat(filePath)
+
+	if !os.IsNotExist(err) {
+		return ErratExists(v.key)
+	}
+
+	f, err := os.Create(filePath)
+
+	defer f.Close()
+
+	if err != nil {
+		return ErratUnknown(err.Error())
+	}
+
+	_, err = f.Write(v.getFileContent())
+
+	if err != nil {
+		return ErratUnknown(err.Error())
+	}
+
+	return NilErrat()
+}
 // Retrieve value
 func (c *Client) Get(key string) (string, errat) {
 	if key == "" {
