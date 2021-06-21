@@ -27,6 +27,13 @@ func ErratNotFound(key string) errat {
 	}
 }
 
+func ErratUnknown(msg string) errat {
+	return errat{
+		isNil:   false,
+		message: msg,
+	}
+}
+
 func ErratMissing(key string) errat {
 	return errat{
 		isNil:   false,
