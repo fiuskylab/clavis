@@ -17,7 +17,7 @@ type test struct {
 func setTestCases() []test {
 	var tests []test
 
-	client := clavis.NewClavis(clavis.DefaultConfig())
+	client, _ := clavis.NewClavis(clavis.DefaultConfig())
 
 	got := client.Set("", "Token Bearer", -1)
 	tests = append(tests, test{
@@ -59,7 +59,7 @@ func getTestCases() []test {
 	key_inf := "key-infinite"
 	val := "value"
 
-	client := clavis.NewClavis(clavis.DefaultConfig())
+	client, _ := clavis.NewClavis(clavis.DefaultConfig())
 
 	{
 		got := client.Set(key_inf, val, -1)
