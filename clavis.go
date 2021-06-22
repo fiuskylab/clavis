@@ -36,10 +36,13 @@ type Client struct {
 }
 
 type valorem struct {
+	key        string
+	keyEncrypt string
 	value      string
 	expiration int64
 }
 
+// Return default config for Clavis client
 func DefaultConfig() Config {
 	return Config{
 		Threads:           2,
@@ -52,11 +55,15 @@ func DefaultConfig() Config {
 
 // Return default client for given Config
 // In case of nil field, will be assumed the default value
-func NewClavis(conf Config) Client {
+func NewClavis(conf Config) (Client, errat) {
+	if err := os.MkdirAll(conf.InDiskPath, 0777); err != nil {
+		return Client{}, ErratUnknown(err.Error())
+	}
+
 	return Client{
 		Config:  conf,
 		storage: make(map[string]valorem),
-	}
+	}, NilErrat()
 }
 
 // Set a key value
