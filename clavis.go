@@ -153,9 +153,66 @@ func (c *Client) Get(key string) (string, errat) {
 
 	if (exp - time.Now().Unix()) < 0 {
 		return "", ErratExpired(key)
+// Read value file and parse the content
+func (c *Client) parseContent(key string) (valorem, errat) {
+	encKey := Sha1Encrypt(key)
+
+	f, err := os.Open(fmt.Sprintf("%s%s", c.Config.InDiskPath, encKey))
+
+	defer f.Close()
+
+	if err != nil {
+		return valorem{}, ErratUnknown(err.Error())
 	}
 
-	return val.value, NilErrat()
+	exp := make([]byte, 16)
+	content := make([]byte, 256)
+
+	reader := bufio.NewReader(f)
+	buf := make([]byte, 1)
+
+	foundBreaker := false
+
+	for {
+		n, err := reader.Read(buf)
+
+		if err != nil {
+			if err != io.EOF {
+				return valorem{}, ErratUnknown(err.Error())
+			}
+
+			break
+		}
+
+		if ":" == string(buf[n]) {
+			foundBreaker = true
+
+			continue
+		}
+
+		if foundBreaker {
+			content = append(content, buf[n])
+
+			continue
+		}
+
+		exp = append(exp, buf[n])
+	}
+
+	expInt, err := strconv.ParseInt(string(exp), 10, 64)
+
+	if err != nil {
+		return valorem{}, ErratUnknown(err.Error())
+	}
+
+	v := valorem{
+		expiration: expInt,
+		value:      string(content),
+		key:        key,
+		keyEncrypt: encKey,
+	}
+
+	return v, NilErrat()
 }
 
 // Retrieve value and remove it
