@@ -1,7 +1,11 @@
 package clavis
 
 import (
+	"bufio"
+	"fmt"
+	"io"
 	"os"
+	"strconv"
 	"time"
 )
 
@@ -139,20 +143,39 @@ func (c *Client) Get(key string) (string, errat) {
 		return "", ErratMissing("key")
 	}
 
-	val, ok := c.storage[key]
+	if c.Config.EnabledInMemory {
+		val, ok := c.storage[key]
+		c.storage[key] = val
+		if !ok {
+			return "", ErratNotFound(key)
+		}
 
-	if !ok {
-		return "", ErratNotFound(key)
-	}
+		exp := val.expiration
 
-	exp := val.expiration
+		if exp == -1 {
+			return val.value, NilErrat()
+		}
 
-	if exp == -1 {
+		if (exp - time.Now().Unix()) < 0 {
+			return "", ErratExpired(key)
+		}
+
 		return val.value, NilErrat()
 	}
 
-	if (exp - time.Now().Unix()) < 0 {
-		return "", ErratExpired(key)
+	if c.Config.EnabledInDisk {
+		val, err := c.parseContent(key)
+
+		if !err.Nil() {
+			return "", err
+		}
+
+		return val.value, NilErrat()
+	}
+
+	return "", ErratNotFound(key)
+}
+
 // Read value file and parse the content
 func (c *Client) parseContent(key string) (valorem, errat) {
 	encKey := Sha1Encrypt(key)
