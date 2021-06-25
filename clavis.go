@@ -117,7 +117,7 @@ func (v *valorem) createFile(path string) errat {
 		return ErratUnknown(err.Error())
 	}
 
-	_, err = f.Write(v.getFileContent())
+	_, err = f.Write(v.setFileContent())
 
 	if err != nil {
 		return ErratUnknown(err.Error())
@@ -125,6 +125,14 @@ func (v *valorem) createFile(path string) errat {
 
 	return NilErrat()
 }
+
+// Return expiration:value to store
+func (v *valorem) setFileContent() []byte {
+	content := fmt.Sprintf("%d:%s", v.expiration, v.value)
+
+	return []byte(content)
+}
+
 // Retrieve value
 func (c *Client) Get(key string) (string, errat) {
 	if key == "" {
