@@ -60,8 +60,10 @@ func DefaultConfig() Config {
 // Return default client for given Config
 // In case of nil field, will be assumed the default value
 func NewClavis(conf Config) (Client, errat) {
-	if err := os.MkdirAll(conf.InDiskPath, 0777); err != nil {
-		return Client{}, ErratUnknown(err.Error())
+	if conf.EnabledInDisk {
+		if err := os.MkdirAll(conf.InDiskPath, 0777); err != nil {
+			return Client{}, ErratUnknown(err.Error())
+		}
 	}
 
 	return Client{
@@ -80,8 +82,10 @@ func (c *Client) Set(key, value string, unixExp time.Duration) errat {
 		return ErratMissing("value")
 	}
 
-	if _, ok := c.storage[key]; ok {
-		return ErratExists(key)
+	if c.Config.EnabledInMemory {
+		if _, ok := c.storage[key]; ok {
+			return ErratExists(key)
+		}
 	}
 
 	val := valorem{
@@ -246,7 +250,26 @@ func (c *Client) Pop(key string) (string, errat) {
 		return "", err
 	}
 
-	delete(c.storage, key)
+	if c.Config.EnabledInDisk {
+		err := deleteFile(key, c.Config.InDiskPath)
+		return "", err
+	}
+
+	if c.Config.EnabledInMemory {
+		delete(c.storage, key)
+	}
 
 	return val, NilErrat()
+}
+
+func deleteFile(key, path string) errat {
+	encKey := Sha1Encrypt(key)
+
+	err := os.Remove(fmt.Sprintf("%s%s", path, encKey))
+
+	if err != nil {
+		return ErratUnknown(err.Error())
+	}
+
+	return NilErrat()
 }
