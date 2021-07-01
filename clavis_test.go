@@ -1,7 +1,6 @@
 package clavis_test
 
 import (
-	"fmt"
 	"reflect"
 	"testing"
 	"time"
@@ -18,24 +17,26 @@ type test struct {
 func setTestCases() []test {
 	var tests []test
 
-	got := clavis.Set("", "Token Bearer", -1)
+	client, _ := clavis.NewClavis(clavis.DefaultConfig())
+
+	got := client.Set("", "Token Bearer", -1)
 	tests = append(tests, test{
 		name: "Missing key",
-		want: fmt.Errorf("Missing key"),
+		want: clavis.ErratMissing("key"),
 		got:  got,
 	})
 
-	got = clavis.Set("token-123", "", -1)
+	got = client.Set("token-123", "", -1)
 	tests = append(tests, test{
 		name: "Missing Value",
-		want: fmt.Errorf("Missing value"),
+		want: clavis.ErratMissing("value"),
 		got:  got,
 	})
 
-	got = clavis.Set("token-123", "Bearer Token", -1)
+	got = client.Set("token-123", "Bearer Token", -1)
 	tests = append(tests, test{
 		name: "Correct set",
-		want: nil,
+		want: clavis.NilErrat(),
 		got:  got,
 	})
 
@@ -58,51 +59,53 @@ func getTestCases() []test {
 	key_inf := "key-infinite"
 	val := "value"
 
+	client, _ := clavis.NewClavis(clavis.DefaultConfig())
+
 	{
-		got := clavis.Set(key_inf, val, -1)
+		got := client.Set(key_inf, val, -1)
 		tests = append(tests, test{
 			name: "Correct set",
-			want: nil,
+			want: clavis.NilErrat(),
 			got:  got,
 		})
 	}
 
 	key_fin := "key-finite"
 	{
-		got := clavis.Set(key_fin, val, 1)
+		got := client.Set(key_fin, val, 1)
 		time.Sleep(time.Second * 1)
 		tests = append(tests, test{
 			name: "Correct set",
-			want: nil,
+			want: clavis.NilErrat(),
 			got:  got,
 		})
 	}
 
 	{
-		_, gotErr := clavis.Get("")
+		_, gotErr := client.Get("")
 		tests = append(tests, test{
 			name: "Empty key",
-			want: fmt.Errorf("Missing key"),
+			want: clavis.ErratMissing("key"),
 			got:  gotErr,
 		})
 	}
 
 	{
 		key := "random_key"
-		_, gotErr := clavis.Get(key)
+		_, gotErr := client.Get(key)
 		tests = append(tests, test{
 			name: "Key inexistent",
-			want: fmt.Errorf("%s not found", key),
+			want: clavis.ErratNotFound(key),
 			got:  gotErr,
 		})
 	}
 
 	{
-		gotVal, gotErr := clavis.Get(key_inf)
+		gotVal, gotErr := client.Get(key_inf)
 
 		tests = append(tests, test{
 			name: "Found key-value nil error",
-			want: nil,
+			want: clavis.NilErrat(),
 			got:  gotErr,
 		})
 
@@ -114,11 +117,11 @@ func getTestCases() []test {
 	}
 
 	{
-		_, gotErr := clavis.Get(key_fin)
+		_, gotErr := client.Get(key_fin)
 
 		tests = append(tests, test{
 			name: "Found expired key-value",
-			want: fmt.Errorf("%s is expirated", key_fin),
+			want: clavis.ErratExpired(key_fin),
 			got:  gotErr,
 		})
 	}
